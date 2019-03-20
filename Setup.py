@@ -1,10 +1,14 @@
 import io, socket, subprocess
 from requests import post, get
 from flask import request, Flask
+#hostapd system
 
 #http://192.168.43.155:5000/setup?ssid=cimaphone&password=cimakodu30&id=1
 
 app = Flask(__name__)
+
+def ap(switch):
+    pass
 
 def writeconfig(ssid, password):
     rtline = "\n"
@@ -15,6 +19,7 @@ def writeconfig(ssid, password):
         conf += password
         conf += "\"\n}"
         note.write(conf)
+    ap(False)
     subprocess.check_call(["sudo", "wpa_cli", "-i", "wlan0", "reconfigure"])
 
 
@@ -33,9 +38,11 @@ def web_setup():
     else:
         writeconfig(request.args.get("ssid"), request.args.get("password"))
         if testinternet():
-            r = post("http://flifloo.ddns.net:5000/locksetup", data = {"mac": os.open("/sys/class/net/wlan0/address").read(), "id": request.args.get("id")})
+            r = get(f"http://flifloo.ddns.net:5000/locksetup?mac={io.open("/sys/class/net/wlan0/address").read()}&id={io.open("/sys/class/net/wlan0/address").read()}")
         else:
+            ap(True)
             return "Cant connect"
+    return "Done"
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, host="0.0.0.0")
