@@ -13,11 +13,9 @@ def ap(switch):
 def writeconfig(ssid, password):
     rtline = "\n"
     with io.open("/etc/wpa_supplicant/wpa_supplicant.conf", "w", encoding="utf8") as note:
-        conf = "ctrl_interface=/var/run/wpa_supplicant\nupdate_config=1\ncountry=FR\nnetwork={\nssid=\""
-        conf += ssid
-        conf += "\"\nscan_ssid=1\npsk=\""
-        conf += password
-        conf += "\"\n}"
+        conf = str()
+        for i in ["ctrl_interface=/var/run/wpa_supplicant\nupdate_config=1\ncountry=FR\nnetwork={\nssid=\"", ssid, "\"\nscan_ssid=1\npsk=\"", password, "\"\n}"]:
+            conf += i
         note.write(conf)
     ap(False)
     subprocess.check_call(["sudo", "wpa_cli", "-i", "wlan0", "reconfigure"])
@@ -38,7 +36,9 @@ def web_setup():
     else:
         writeconfig(request.args.get("ssid"), request.args.get("password"))
         if testinternet():
-            r = get(f"http://flifloo.ddns.net:5000/locksetup?mac={io.open("/sys/class/net/wlan0/address").read()}&id={io.open("/sys/class/net/wlan0/address").read()}")
+            mac = io.open("/sys/class/net/wlan0/address").read()
+            id = request.args.get("id")
+            r = get(f"http://flifloo.ddns.net:5000/locksetup?mac={mac}&id={id}")
         else:
             ap(True)
             return "Cant connect"
