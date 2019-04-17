@@ -1,4 +1,4 @@
-import io, socket, subprocess
+import io, socket, subprocess, shelve
 from requests import post, get
 from flask import request, Flask
 #hostapd system
@@ -7,9 +7,6 @@ from flask import request, Flask
 
 app = Flask(__name__)
 
-def ap(switch):
-    pass
-
 def writeconfig(ssid, password):
     rtline = "\n"
     with io.open("/etc/wpa_supplicant/wpa_supplicant.conf", "w", encoding="utf8") as note:
@@ -17,9 +14,7 @@ def writeconfig(ssid, password):
         for i in ["ctrl_interface=/var/run/wpa_supplicant\nupdate_config=1\ncountry=FR\nnetwork={\nssid=\"", ssid, "\"\nscan_ssid=1\npsk=\"", password, "\"\n}"]:
             conf += i
         note.write(conf)
-    ap(False)
     subprocess.check_call(["sudo", "wpa_cli", "-i", "wlan0", "reconfigure"])
-
 
 def testinternet():
     result = True
@@ -38,11 +33,12 @@ def web_setup():
         if testinternet():
             mac = io.open("/sys/class/net/wlan0/address").read()
             id = request.args.get("id")
-            r = get(f"http://flifloo.ddns.net:5000/locksetup?mac={mac}&id={id}")
+            with shelve.open("Settings.conf") as settings:
+                settings["token"] = id
+            r = get(f"http://vps.flifloo.fr:5000/locksetup?mac={mac}&id={id}")
         else:
-            ap(True)
             return "Cant connect"
     return "Done"
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000, host="0.0.0.0")
+    app.run(debug=True, port=6000, host="0.0.0.0")
