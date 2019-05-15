@@ -42,7 +42,9 @@ def web_setup():
 
 @app.route("/addyubi")
 def add_yubi():
-    out = subprocess.check_output(["sudo", "yhsm-decrypt-aead", "--aes-key", "000102030405060708090a0b0c0d0e0f", "--key-handle", "1", "--format", "yubikey-csv", "/var/cache/yubikey-ksm/aeads/"])
+    if str(subprocess.check_output(["sudo ykpersonalize; exit 0"], stderr=subprocess.STDOUT, shell=True)) == "b'Yubikey core error: no yubikey present\\n'":
+        return "No yubikey"
+    out = str(subprocess.check_output(["sudo", "yhsm-decrypt-aead", "--aes-key", "000102030405060708090a0b0c0d0e0f", "--key-handle", "1", "--format", "yubikey-csv", "/var/cache/yubikey-ksm/aeads/"]))
     out = out[2:][:-1].split("\\n")
     del out[-1]
     dico = dict()
@@ -51,17 +53,35 @@ def add_yubi():
         publicid = i.find(",", id+1)
         privateid = i.find(",", publicid+1)
         secretkey = i.find(",", privateid+1)
-        dico[i[:id]] = {"publicid": i[id+1:publicid], "privateid": i[publicid+1:privateid], "secretkey": i[privateid+1:secretkey]}
+        dico[int(i[:id])] = {"publicid": i[id+1:publicid], "privateid": i[publicid+1:privateid], "secretkey": i[privateid+1:secretkey]}
 
-    with shelve.open("Settings.conf") as settings:
-        id = settings["register"][-1] + 1
+    out = str(subprocess.check_output(["sudo", "ykval-export-clients"]))
+    out = out[2:][:-1].split("\\n")
+    del out[-1]
+    reg = dict()
+    for i in out:
+        id = i.find(",")
+        storage = i.find(",", id)
+        wriedid = i.find(",", storage)
+        secret = i.find(",", wriedid)
+        reg[int(i[:id])] = i[wriedid+1:secret]
 
-        if id > dico.keys()[-1]:
-            return "Error, too many yubikeys"
+    with shelve.open("Settings.conf", writeback = True) as settings:
+        if len(settings["register"]) != 0:
+            id = settings["register"][-1] + 1
+        else:
+            id = 1
 
-        #Verifier si une yubikey est connecter !
+        settings["register"].append(id)
 
-        subprocess.check_call(["ykpersonalize", "-1", f"-ofixed={dico[id]["publicid"]}", f"-ouid={dico[id]["privateid"]}", f"-a{dico[id]["secretkey"]}"])
+        settings["keys"][id] = reg[id]
+
+
+    if id > list(dico.keys())[-1]:
+        return "Error, too many yubikeys"
+
+    subprocess.check_call(["ykpersonalize", "-1", f"-ofixed={dico[id]['publicid']}", f"-ouid={dico[id]['privateid']}", f"-a{dico[id]['secretkey']}", "-y"])
+    print(dico[id]["publicid"])
 
     return "Ok"
 
