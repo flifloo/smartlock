@@ -1,10 +1,14 @@
 from yubico_client import Yubico
 import lock, shelve
 
-with shelve.open("Settings.conf") as settings:
-    client = Yubico(settings["id"], settings["secret"], api_urls=('http://localhost/wsapi/2.0/verify',))
+ids = {"interncccccc": 1, "interncccccd": 2}
+
 while True:
     try:
+        id = ids[input(">")[:12]]
+        with shelve.open("Settings.conf") as settings:
+            #client = Yubico(id, settings["keys"][id], api_urls=('http://localhost/wsapi/2.0/verify',))
+            client = Yubico(1, "QMho+Y4mtsY+KbCYu1gRKtDtwAM=", api_urls=('http://localhost/wsapi/2.0/verify',))
         client.verify(input())
     except:
         pass

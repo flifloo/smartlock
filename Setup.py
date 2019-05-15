@@ -40,5 +40,31 @@ def web_setup():
             return "Cant connect"
     return "Done"
 
+@app.route("/addyubi")
+def add_yubi():
+    out = subprocess.check_output(["sudo", "yhsm-decrypt-aead", "--aes-key", "000102030405060708090a0b0c0d0e0f", "--key-handle", "1", "--format", "yubikey-csv", "/var/cache/yubikey-ksm/aeads/"])
+    out = out[2:][:-1].split("\\n")
+    del out[-1]
+    dico = dict()
+    for i in out:
+        id = i.find(",")
+        publicid = i.find(",", id+1)
+        privateid = i.find(",", publicid+1)
+        secretkey = i.find(",", privateid+1)
+        dico[i[:id]] = {"publicid": i[id+1:publicid], "privateid": i[publicid+1:privateid], "secretkey": i[privateid+1:secretkey]}
+
+    with shelve.open("Settings.conf") as settings:
+        id = settings["register"][-1] + 1
+
+        if id > dico.keys()[-1]:
+            return "Error, too many yubikeys"
+
+        #Verifier si une yubikey est connecter !
+
+        subprocess.check_call(["ykpersonalize", "-1", f"-ofixed={dico[id]["publicid"]}", f"-ouid={dico[id]["privateid"]}", f"-a{dico[id]["secretkey"]}"])
+
+    return "Ok"
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=6000, host="0.0.0.0")

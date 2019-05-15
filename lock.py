@@ -4,6 +4,9 @@ import shelve
 led = LED(17)
 
 def state(current : bool = None):
+    with shelve.open("Settings.conf") as settings:
+        if not "state" in settings:
+            settings["state"] = False
     if current != None:
         with shelve.open("Settings.conf") as settings:
             settings["state"] = current
