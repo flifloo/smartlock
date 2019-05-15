@@ -81,7 +81,6 @@ def add_yubi():
         return "Error, too many yubikeys"
 
     subprocess.check_call(["ykpersonalize", "-1", f"-ofixed={dico[id]['publicid']}", f"-ouid={dico[id]['privateid']}", f"-a{dico[id]['secretkey']}", "-y"])
-    print(dico[id]["publicid"])
 
     return "Ok"
 

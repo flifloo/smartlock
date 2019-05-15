@@ -1,7 +1,7 @@
 from yubico_client import Yubico
 import lock, shelve
 
-ids = {"interncccccc": 1, "interncccccd": 2}
+ids = {"interncccccc": 1, "interncccccd": 2, "internccccch": 3, "internccccci": 4, "internccccce": 5, "interncccccg": 6, "interncccccf": 7, "interncccccb": 8, "internccccck": 9, "interncccccj": 10}
 
 while True:
     try:
