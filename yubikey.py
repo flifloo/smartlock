@@ -14,4 +14,4 @@ while True:
     except:
         pass
     else:
-        lock.switch()
+        lock.switch(id)

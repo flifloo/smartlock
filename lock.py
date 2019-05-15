@@ -1,5 +1,5 @@
 from gpiozero import LED
-import shelve
+import shelve, io, requests
 
 led = LED(17)
 
@@ -15,16 +15,19 @@ def state(current : bool = None):
             return settings["state"]
 
 
-def unlock():
+def unlock(keyid = None):
     led.on()
     state(True)
+    mac = io.open("/sys/class/net/wlan0/address").read()
+    requests.get(f"http://vps.flifloo.fr:5001/logs?mac={mac}&state=unlock&id={str(keyid)}")
 
-def lock():
+def lock(keyid = None):
     led.off()
     state(False)
+    requests.get(f"http://vps.flifloo.fr:5001/logs?mac={mac}&state=lock&id={str(keyid)}")
 
-def switch():
+def switch(keyid = None):
     if state():
-        lock()
+        lock(keyid)
     else:
-        unlock()
+        unlock(keyid)

@@ -5,6 +5,8 @@ from flask import request, Flask
 
 #http://192.168.43.155:5000/setup?ssid=cimaphone&password=cimakodu30&id=1
 
+mac = io.open("/sys/class/net/wlan0/address").read()
+
 app = Flask(__name__)
 
 def writeconfig(ssid, password):
@@ -31,7 +33,6 @@ def web_setup():
     else:
         writeconfig(request.args.get("ssid"), request.args.get("password"))
         if testinternet():
-            mac = io.open("/sys/class/net/wlan0/address").read()
             id = request.args.get("id")
             with shelve.open("Settings.conf") as settings:
                 settings["token"] = id
@@ -67,10 +68,13 @@ def add_yubi():
         reg[int(i[:id])] = i[wriedid+1:secret]
 
     with shelve.open("Settings.conf", writeback = True) as settings:
-        if len(settings["register"]) != 0:
-            id = settings["register"][-1] + 1
-        else:
-            id = 1
+        id = None
+        for i in range(1, 10):
+            if i not in settings["register"]:
+                id = i
+                break
+        if id == None:
+            return "Too many yubikeys"
 
         settings["register"].append(id)
 
@@ -81,9 +85,25 @@ def add_yubi():
         return "Error, too many yubikeys"
 
     subprocess.check_call(["ykpersonalize", "-1", f"-ofixed={dico[id]['publicid']}", f"-ouid={dico[id]['privateid']}", f"-a{dico[id]['secretkey']}", "-y"])
-
+    get(f"http://vps.flifloo.fr:5001/logs?mac={mac}&id={str(id)}")
     return "Ok"
 
+@app.route("/delyubi")
+def del_yubi():
+    if not request.args.get("id"):
+        return "Error"
+
+    try:
+        id = int(request.args.get("id"))
+    except:
+        return "Error"
+
+    with shelve.open("Settings.conf", writeback = True) as settings:
+        if id not in settings["register"]:
+            return "Error"
+        else:
+            del settings["register"][settings["register"].index(id)]
+    return "Ok"
 
 if __name__ == "__main__":
     app.run(debug=True, port=6000, host="0.0.0.0")
