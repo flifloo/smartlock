@@ -11,6 +11,8 @@ while True:
             client = Yubico(id, settings["keys"][id], api_urls=('http://localhost/wsapi/2.0/verify',))
             #client = Yubico(1, "QMho+Y4mtsY+KbCYu1gRKtDtwAM=", api_urls=('http://localhost/wsapi/2.0/verify',))
         client.verify(inp)
+    except KeyboardInterrupt:
+        break
     except:
         pass
     else:

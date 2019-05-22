@@ -1,4 +1,4 @@
-import io, socket, subprocess, shelve
+import io, socket, subprocess, shelve, time
 from requests import post, get
 from flask import request, Flask
 #hostapd system
@@ -32,6 +32,7 @@ def web_setup():
         return "Error"
     else:
         writeconfig(request.args.get("ssid"), request.args.get("password"))
+        time.sleep(10)
         if testinternet():
             id = request.args.get("id")
             with shelve.open("Settings.conf") as settings:

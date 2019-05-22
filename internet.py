@@ -8,7 +8,10 @@ def web_unlock():
         return "Error"
     else:
         with shelve.open("Settings.conf") as settings:
-            token = settings["token"]
+            if "token" in settings:
+                token = settings["token"]
+            else:
+                return "System not setup !"
         if request.args.get("token") != token:
             return "Invalid Token"
         if request.args.get("state") == "open":

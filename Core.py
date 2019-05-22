@@ -13,3 +13,8 @@ if not isfile("Settings.conf"):
     with shelve.open("Settings.conf") as settings:
         settings["keys"] = keys
         settings["register"] = list()
+
+
+subprocess.check_call(["screen", "-S", "setup", "-d", "-m", "sudo", "python3.7", "Setup.py"])
+subprocess.check_call(["screen", "-S", "internet", "-d", "-m", "sudo", "python3.7", "internet.py"])
+subprocess.check_call(["screen", "-S", "yubikey", "-m", "sudo", "python3.7", "yubikey.py"])
